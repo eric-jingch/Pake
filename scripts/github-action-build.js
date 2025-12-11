@@ -117,7 +117,7 @@ class PakeBuildManager {
     }
 
     if (process.env.FULLSCREEN === "true") {
-      params.push("--fullscreen");
+      params.push("--force-internal-navigation");
     }
 
     if (this.config.supportsMultiArch && process.env.MULTI_ARCH === "true") {
