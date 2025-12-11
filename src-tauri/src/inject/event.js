@@ -394,6 +394,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const absoluteUrl = hrefUrl.href;
       let filename = anchorElement.download || getFilenameFromUrl(absoluteUrl);
 
+      // Early check: Allow OAuth/authentication links to navigate naturally
+      if (window.isAuthLink(absoluteUrl)) {
+        console.log("[Pake] Allowing OAuth navigation to:", absoluteUrl);
+        return;
+      }
+
       // Handle _blank links: same domain navigates in-app, cross-domain opens new window
       if (target === "_blank") {
         if (forceInternalNavigation) {
@@ -477,7 +483,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Rewrite the window.open function.
   const originalWindowOpen = window.open;
   window.open = function (url, name, specs) {
-    if (name === "AppleAuthentication") {
+    // Allow authentication popups to open normally
+    if (window.isAuthPopup(url, name)) {
       return originalWindowOpen.call(window, url, name, specs);
     }
 
@@ -896,6 +903,8 @@ function setDefaultZoom() {
   const htmlZoom = window.localStorage.getItem("htmlZoom");
   if (htmlZoom) {
     setZoom(htmlZoom);
+  } else if (window.pakeConfig?.zoom && window.pakeConfig.zoom !== 100) {
+    setZoom(`${window.pakeConfig.zoom}%`);
   }
 }
 

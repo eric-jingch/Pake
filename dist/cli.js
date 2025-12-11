@@ -23,7 +23,7 @@ import sharp from 'sharp';
 import * as psl from 'psl';
 
 var name = "pake-cli";
-var version = "3.5.2";
+var version = "3.5.3";
 var description = "🤱🏻 Turn any webpage into a desktop app with one command. 🤱🏻 一键打包网页生成轻量桌面应用。";
 var engines = {
 	node: ">=18.0.0"
@@ -470,7 +470,7 @@ async function mergeConfig(url, options, tauriConf) {
             await fsExtra.copy(sourcePath, destPath);
         }
     }));
-    const { width, height, fullscreen, maximize, hideTitleBar, alwaysOnTop, appVersion, darkMode, disabledWebShortcuts, activationShortcut, userAgent, showSystemTray, systemTrayIcon, useLocalFile, identifier, name, resizable = true, inject, proxyUrl, installerLanguage, hideOnClose, incognito, title, wasm, enableDragDrop, multiInstance, startToTray, forceInternalNavigation, } = options;
+    const { width, height, fullscreen, maximize, hideTitleBar, alwaysOnTop, appVersion, darkMode, disabledWebShortcuts, activationShortcut, userAgent, showSystemTray, systemTrayIcon, useLocalFile, identifier, name, resizable = true, inject, proxyUrl, installerLanguage, hideOnClose, incognito, title, wasm, enableDragDrop, multiInstance, startToTray, forceInternalNavigation, zoom, minWidth, minHeight, ignoreCertificateErrors, } = options;
     const { platform } = process;
     const platformHideOnClose = hideOnClose ?? platform === 'darwin';
     const tauriConfWindowOptions = {
@@ -491,6 +491,10 @@ async function mergeConfig(url, options, tauriConf) {
         enable_drag_drop: enableDragDrop,
         start_to_tray: startToTray && showSystemTray,
         force_internal_navigation: forceInternalNavigation,
+        zoom,
+        min_width: minWidth,
+        min_height: minHeight,
+        ignore_certificate_errors: ignoreCertificateErrors,
     };
     Object.assign(tauriConf.pake.windows[0], { url, ...tauriConfWindowOptions });
     tauriConf.productName = name;
@@ -1363,6 +1367,10 @@ const DEFAULT_PAKE_OPTIONS = {
     multiInstance: false,
     startToTray: false,
     forceInternalNavigation: false,
+    zoom: 100,
+    minWidth: 0,
+    minHeight: 0,
+    ignoreCertificateErrors: false,
 };
 
 async function checkUpdateTips() {
@@ -1899,6 +1907,27 @@ program
     .hideHelp())
     .addOption(new Option('--installer-language <string>', 'Installer language')
     .default(DEFAULT_PAKE_OPTIONS.installerLanguage)
+    .hideHelp())
+    .addOption(new Option('--zoom <number>', 'Initial page zoom level (50-200)')
+    .default(DEFAULT_PAKE_OPTIONS.zoom)
+    .argParser((value) => {
+    const zoom = parseInt(value);
+    if (isNaN(zoom) || zoom < 50 || zoom > 200) {
+        throw new Error('--zoom must be a number between 50 and 200');
+    }
+    return zoom;
+})
+    .hideHelp())
+    .addOption(new Option('--min-width <number>', 'Minimum window width')
+    .default(DEFAULT_PAKE_OPTIONS.minWidth)
+    .argParser(validateNumberInput)
+    .hideHelp())
+    .addOption(new Option('--min-height <number>', 'Minimum window height')
+    .default(DEFAULT_PAKE_OPTIONS.minHeight)
+    .argParser(validateNumberInput)
+    .hideHelp())
+    .addOption(new Option('--ignore-certificate-errors', 'Ignore certificate errors (for self-signed certificates)')
+    .default(DEFAULT_PAKE_OPTIONS.ignoreCertificateErrors)
     .hideHelp())
     .version(packageJson.version, '-v, --version')
     .configureHelp({
